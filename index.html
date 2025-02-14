@@ -14,6 +14,14 @@
             --color-text-100: #fff;
             --color-interactive-100: #64D2FF;
         }
+
+        html {
+            box-sizing: border-box;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+
         body {
             background-color: var(--color-surface-900);
             color: var(--color-text-100);
@@ -22,6 +30,20 @@
         a {
             color: var(--color-interactive-100);
         }
+
+        /* ================= */
+        /*     List Item     */
+        /* ================= */
+        .car_list {
+            list-style: none;
+        }
+
+        .car_list li {
+            background-color: var(--color-surface-500);
+
+        }
+
+        /* === End of List Item ===== */
         .car_grid li {display: inline-block;}
     </style>
 </head>
