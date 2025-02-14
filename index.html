@@ -19,7 +19,7 @@
 const hasIterationProtocol = variable => variable !== null && Symbol.iterator in Object(variable)
 function h(type, params, children) {
     const el = document.createElement(type)
-    for (let [k,v] of Object.entries(params)) {el[k] = v}
+    for (let [k,v] of Object.entries(params)) {el.setAttribute(k,v)}
     if      (typeof(children)==="string"   ) {el.appendChild(document.createTextNode(children))}
     else if (hasIterationProtocol(children)) {for (let c of children) {el.append(c)}}
     else if (children                      ) {el.appendChild(children)}
@@ -51,12 +51,7 @@ async function get(path) {
 }
 
 
-function render_grid(car_items) {
-    return render_list(car_items, 'grid')
-    //return h('ul',{'class': 'car_grid'},car_items.map((item)=>h('li',{},
-    //    h('img',{alt:item.title, src:item.image.url})
-    //)))
-}
+function render_grid(car_items) {return render_list(car_items, 'grid')}
 function render_list(car_items, type='list') {
     return h('ul',{'class': `car_${type}`},car_items.map((car_item)=>h('li',{},
         h('a',
