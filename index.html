@@ -26,24 +26,16 @@ function h(type, params, children) {
     return el
 }
 
-async function play(universal_id) {
-    const playable = await (await fetch(`http://bff-mobile-guacamole.musicradio.com/v16/playables/${universal_id}`)).json()
-    const stream_url = playable.payload.stream_url
-    if (stream_url) {const audio = document.getElementById('audio'); audio.src = stream_url; audio.play();}
-    else            {console.error('unable to find stream_url in', playable)}
-}
 
 const urlParams = new URLSearchParams(window.location.search)
 
-const endpoint = urlParams.get('endpoint') || window.location.origin //'https://bff-car-guacamole.musicradio.com/'
+const endpoint = urlParams.get('endpoint') || window.location.origin
 const carHeaders = new Headers()
 carHeaders.append("Accept", "application/vnd.global.5+json")
-
 async function get(path) {
     console.log('get', path)
     return await (await fetch(`${endpoint}${path}`, {headers: carHeaders})).json()
 }
-
 
 function render_grid(car_items) {return render_list(car_items, 'grid')}
 function render_list(car_items, type='list') {
@@ -83,6 +75,21 @@ async function navigate(path) {
     element_car.appendChild(render_page(await get(path)))
 }
 
+function render_features(features_response) {
+    return h('ul',{},features_response.map((feature)=>
+        h('li',{},
+            h('a',{href: `#/features/${feature.slug}`, should_send_auth: feature.should_send_auth}, feature.name)
+        )
+    ))
+}
+document.getElementById('features').appendChild(render_features(await get('/features')))
+
+async function play(universal_id) {
+    const playable = await (await fetch(`http://bff-mobile-guacamole.musicradio.com/v16/playables/${universal_id}`)).json()
+    const stream_url = playable.payload.stream_url
+    if (stream_url) {const audio = document.getElementById('audio'); audio.src = stream_url; audio.play();}
+    else            {console.error('unable to find stream_url in', playable)}
+}
 
 function getHash() {return window.location.hash.replace('#','')}
 function setHash(hash) {window.location.hash = `#${hash}`}
@@ -91,18 +98,6 @@ window.addEventListener('hashchange', async (event)=>{
     if (hash.startsWith('/playables/')) {await play(hash.replace('/playables/', '')); return;}
     await navigate(hash)
 })
-
-
-function render_features(features_response) {
-    return h('ul',{},features_response.map(
-        (feature)=>h('li',{},
-            h('a',{href: `#/features/${feature.slug}`, should_send_auth: feature.should_send_auth}, feature.name)
-        )
-    ))
-}
-document.getElementById('features').appendChild(render_features(await get('/features')))
-
-
 setHash(getHash() || '/features/home-hub')
 </script>
 </body>
