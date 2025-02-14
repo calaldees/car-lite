@@ -31,7 +31,10 @@ const urlParams = new URLSearchParams(window.location.search)
 
 const endpoint = urlParams.get('endpoint') || window.location.origin
 const carHeaders = new Headers()
-carHeaders.append("Accept", "application/vnd.global.5+json")
+const vnd_version = urlParams.get('vnd_version') || '5'
+carHeaders.append("Accept", `application/vnd.global.${vnd_version}+json`)
+const authorization = urlParams.get('authorization') || ''
+if (authorization) {carHeaders.append("Authorization", authorization)}
 async function get(path) {
     console.log('get', path)
     return await (await fetch(`${endpoint}${path}`, {headers: carHeaders})).json()
@@ -92,8 +95,14 @@ async function play(universal_id) {
 }
 
 function getHash() {return window.location.hash.replace('#','')}
-function setHash(hash) {window.location.hash = `#${hash}`}
+function setHash(hash) {
+    window.location.hash = `#${hash}`
+    window.dispatchEvent(new HashChangeEvent("hashchange"))
+}
+let hashchange_timestamp;    // Debounce: browsers double fire this event? Bad browser!
 window.addEventListener('hashchange', async (event)=>{
+    if ((new Date()).getTime() - hashchange_timestamp < 10) {return}
+    hashchange_timestamp = (new Date()).getTime()
     const hash = getHash()
     if (hash.startsWith('/playables/')) {await play(hash.replace('/playables/', '')); return;}
     await navigate(hash)
