@@ -26,12 +26,6 @@ function h(type, params, children) {
     return el
 }
 
-function getHash() {return window.location.hash.replace('#','')}
-function setHash(hash) {
-    window.location.hash = `#${hash}`
-    window.dispatchEvent(new HashChangeEvent("hashchange"))
-}
-
 async function play(universal_id) {
     const playable = await (await fetch(`http://bff-mobile-guacamole.musicradio.com/v16/playables/${universal_id}`)).json()
     const stream_url = playable.payload.stream_url
@@ -89,6 +83,9 @@ async function navigate(path) {
     element_car.appendChild(render_page(await get(path)))
 }
 
+
+function getHash() {return window.location.hash.replace('#','')}
+function setHash(hash) {window.location.hash = `#${hash}`}
 window.addEventListener('hashchange', async (event)=>{
     const hash = getHash()
     if (hash.startsWith('/playables/')) {await play(hash.replace('/playables/', '')); return;}
