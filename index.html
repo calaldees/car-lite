@@ -42,12 +42,24 @@
         .car_list li {
             display: block;
             background-color: var(--color-surface-500);
-            padding: .75rem;
             margin-bottom: .25rem;
         }
 
-        .car_list li a {
-            display: block;
+        .car_list a {
+            display: flex;
+            flex-direction: column;
+            min-height: 7rem;
+            padding: .75rem;
+        }
+
+        .car_list img {
+            position: absolute;
+            width: 5.5rem;
+        }
+
+        .car_list p {
+            padding-left: 6.25rem;
+            margin: 0;
         }
 
         /* === End of List Item ===== */
