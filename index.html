@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <link id="favicon" rel="shortcut icon" type="image/png" href="data:image/png;base64,....==" />
+    <title>Car-Lite</title>
+
+    <style>
+        .car_grid li {display: inline-block;}
+    </style>
+</head>
+<body>
+    <audio id="audio" controls></audio>
+    <button onclick="history.back()">Back</button>
+    <div id="features"></div>
+    <div id="car"></div>
+<script type="module">
+
+const hasIterationProtocol = variable => variable !== null && Symbol.iterator in Object(variable)
+function h(type, params, children) {
+    const el = document.createElement(type)
+    for (let [k,v] of Object.entries(params)) {el[k] = v}
+    if      (typeof(children)==="string"   ) {el.appendChild(document.createTextNode(children))}
+    else if (hasIterationProtocol(children)) {for (let c of children) {el.append(c)}}
+    else if (children                      ) {el.appendChild(children)}
+    return el
+}
+
+function getHash() {return window.location.hash.replace('#','')}
+function setHash(hash) {
+    window.location.hash = `#${hash}`
+    window.dispatchEvent(new HashChangeEvent("hashchange"))
+}
+
+async function play(universal_id) {
+    const playable = await (await fetch(`http://bff-mobile-guacamole.musicradio.com/v16/playables/${universal_id}`)).json()
+    const stream_url = playable.payload.stream_url
+    if (stream_url) {const audio = document.getElementById('audio'); audio.src = stream_url; audio.play();}
+    else            {console.error('unable to find stream_url in', playable)}
+}
+
+const urlParams = new URLSearchParams(window.location.search)
+
+const endpoint = urlParams.get('endpoint') || window.location.origin //'https://bff-car-guacamole.musicradio.com/'
+const carHeaders = new Headers()
+carHeaders.append("Accept", "application/vnd.global.5+json")
+
+async function get(path) {
+    console.log('get', path)
+    return await (await fetch(`${endpoint}${path}`, {headers: carHeaders})).json()
+}
+
+
+function render_grid(car_items) {
+    return render_list(car_items, 'grid')
+    //return h('ul',{'class': 'car_grid'},car_items.map((item)=>h('li',{},
+    //    h('img',{alt:item.title, src:item.image.url})
+    //)))
+}
+function render_list(car_items, type='list') {
+    return h('ul',{'class': `car_${type}`},car_items.map((car_item)=>h('li',{},
+        h('a',
+            {href: `#${car_item.primary_action.payload?.link?.href || '/playables/'+car_item.primary_action.payload?.id}`},
+            [
+                h('img',{src: car_item.image.url}),
+                h('p',{},car_item.title),
+                h('p',{},car_item.subtitle),
+            ])
+    )))
+}
+function render_continue_listening() {
+    return 'continue_listening'
+}
+function render_placeholder() {
+    return 'placeholder'
+}
+function render_page(car_response) {
+    return h('div',{},[
+        h('h1',{},car_response.title),
+        h('div',{},car_response.sections.map(section=>section.content.map(content=>[
+            h('h2',{},content.title), {
+                grid: render_grid,
+                list: render_list,
+                continue_listening: render_continue_listening,
+                placeholder: render_placeholder,
+            }[content.type](content.items)
+        ]).flat()).flat())
+    ])
+}
+
+const element_car = document.getElementById('car')
+async function navigate(path) {
+    element_car.innerHTML = ""
+    element_car.appendChild(render_page(await get(path)))
+}
+
+window.addEventListener('hashchange', async (event)=>{
+    const hash = getHash()
+    if (hash.startsWith('/playables/')) {await play(hash.replace('/playables/', '')); return;}
+    await navigate(hash)
+})
+
+
+function render_features(features_response) {
+    return h('ul',{},features_response.map(
+        (feature)=>h('li',{},
+            h('a',{href: `#/features/${feature.slug}`, should_send_auth: feature.should_send_auth}, feature.name)
+        )
+    ))
+}
+document.getElementById('features').appendChild(render_features(await get('/features')))
+
+
+setHash(getHash() || '/features/home-hub')
+</script>
+</body>
+</html>
