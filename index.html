@@ -124,6 +124,7 @@
 </head>
 <body>
     <div id="versions"></div>
+    <div id="endpoints"></div>
     <audio id="audio" controls></audio>
     <button onclick="history.back()">Back</button>
     <div id="features"></div>
@@ -140,11 +141,18 @@ function h(type, params, children) {
     return el
 }
 
+const ENDPOINTS = {
+    dev: "https://bff-car-guacamole.dev.digital.global.com",
+    staging: "https://bff-car-guacamole.stg.diginf.musicradio.com",
+    prod: "https://bff-car-guacamole.musicradio.com",
+}
+const VERSIONS = [1,2,3,4,5]
+
 const urlParams = new URLSearchParams(window.location.search)
 
-const endpoint = urlParams.get('endpoint') || window.location.origin
+const endpoint = urlParams.get('endpoint') || ENDPOINTS.prod  //window.location.origin
 const carHeaders = new Headers()
-const vnd_version = urlParams.get('vnd_version') || '5'
+const vnd_version = urlParams.get('vnd_version') || VERSIONS.at(-1)
 carHeaders.append("Accept", `application/vnd.global.${vnd_version}+json`)
 const authorization = urlParams.get('authorization') || ''
 if (authorization) {carHeaders.append("Authorization", authorization)}
@@ -153,15 +161,32 @@ async function get(path) {
     return await (await fetch(`${endpoint}${path}`, {headers: carHeaders})).json()
 }
 
-function render_version_list(versions=[1,2,3,4,5]) {
-    function href(vnd_version) {
+const hrefForUrlParams = (urlParams) => `${window.location.origin}${window.location.pathname}?${urlParams.toString()}${window.location.hash}`
+
+function render_version_list(versions=VERSIONS) {
+    function href(version) {
         const urlParamsVersion = new URLSearchParams(urlParams.toString())
-        urlParamsVersion.set('vnd_version', vnd_version)
-        return `${window.location.origin}/?${urlParamsVersion.toString()}${window.location.hash}`
+        urlParamsVersion.set('vnd_version', version)
+        return hrefForUrlParams(urlParamsVersion)
     }
-    return h('ul', {}, versions.map(version=>h('li',{class: version==vnd_version?'current':''},h('a',{href: href(version)},version))))
+    return h('ul', {}, versions.map(_version=>
+        h('li',{class: _version==vnd_version?'current':''},h('a',{href: href(_version)},_version))
+    ))
 }
 document.getElementById("versions").appendChild(render_version_list())
+
+function render_endpoints_list(endpoints=ENDPOINTS) {
+    function href(_endpoint) {
+        const urlParamsVersion = new URLSearchParams(urlParams.toString())
+        urlParamsVersion.set('endpoint', _endpoint)
+        return hrefForUrlParams(urlParamsVersion)
+    }
+    return h('ul', {}, Object.entries(endpoints).map(([env_name, _endpoint])=>
+        h('li',{class: _endpoint==endpoint?'current':''},h('a',{href: href(_endpoint)}, env_name))
+    ))
+}
+document.getElementById("endpoints").appendChild(render_endpoints_list())
+
 
 function render_item(car_item) {
     return h('li',{},
