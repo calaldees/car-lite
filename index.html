@@ -124,7 +124,6 @@ function h(type, params, children) {
     return el
 }
 
-
 const urlParams = new URLSearchParams(window.location.search)
 
 const endpoint = urlParams.get('endpoint') || window.location.origin
@@ -138,9 +137,8 @@ async function get(path) {
     return await (await fetch(`${endpoint}${path}`, {headers: carHeaders})).json()
 }
 
-function render_grid(car_items) {return render_list(car_items, 'grid')}
-function render_list(car_items, type='list') {
-    return h('ul',{'class': `car_${type}`},car_items.map((car_item)=>h('li',{},
+function render_item(car_item) {
+    return h('li',{},
         h('a',
             {href: `#${car_item.primary_action.payload?.link?.href || '/playables/'+car_item.primary_action.payload?.id}`},
             [
@@ -148,7 +146,13 @@ function render_list(car_items, type='list') {
                 h('p',{},car_item.title),
                 h('p',{},car_item.subtitle),
             ])
-    )))
+    )
+}
+function render_grid(car_items) {
+    return h('ul',{class: 'car_grid'}, car_items.map(render_item))
+}
+function render_list(car_items) {
+    return h('ul',{class: 'car_list'}, car_items.map(render_item))
 }
 function render_continue_listening() {
     return 'continue_listening'
@@ -156,16 +160,24 @@ function render_continue_listening() {
 function render_placeholder() {
     return 'placeholder'
 }
+function render_more_link(content) {
+    if (content.type == 'grid') {
+        return h('a',{href: `#${content.primary_action.payload?.link?.href}`},'More')
+    }
+    return ''
+}
 function render_page(car_response) {
     return h('div',{},[
         h('h1',{},car_response.title),
         h('div',{},car_response.sections.map(section=>section.content.map(content=>[
-            h('h2',{},content.title), {
+            h('h2',{},content.title),
+            render_more_link(content),
+            {
                 grid: render_grid,
                 list: render_list,
                 continue_listening: render_continue_listening,
                 placeholder: render_placeholder,
-            }[content.type](content.items)
+            }[content.type](content.items),
         ]).flat()).flat())
     ])
 }
@@ -199,7 +211,7 @@ function setHash(hash) {
 }
 let hashchange_timestamp;    // Debounce: browsers double fire this event? Bad browser!
 window.addEventListener('hashchange', async (event)=>{
-    if ((new Date()).getTime() - hashchange_timestamp < 10) {return}
+    if ((new Date()).getTime() - hashchange_timestamp < 10) {return}  // replace with debounce?
     hashchange_timestamp = (new Date()).getTime()
     const hash = getHash()
     if (hash.startsWith('/playables/')) {await play(hash.replace('/playables/', '')); return;}
