@@ -101,6 +101,7 @@
     </style>
 </head>
 <body>
+    <div id="versions"></div>
     <audio id="audio" controls></audio>
     <button onclick="history.back()">Back</button>
     <div id="features"></div>
@@ -111,7 +112,7 @@ const hasIterationProtocol = variable => variable !== null && Symbol.iterator in
 function h(type, params, children) {
     const el = document.createElement(type)
     for (let [k,v] of Object.entries(params)) {el.setAttribute(k,v)}
-    if      (typeof(children)==="string"   ) {el.appendChild(document.createTextNode(children))}
+    if      (["string","number"].indexOf(typeof(children))>=0) {el.appendChild(document.createTextNode(children))}
     else if (hasIterationProtocol(children)) {for (let c of children) {el.append(c)}}
     else if (children                      ) {el.appendChild(children)}
     return el
@@ -129,6 +130,16 @@ async function get(path) {
     console.log('get', path)
     return await (await fetch(`${endpoint}${path}`, {headers: carHeaders})).json()
 }
+
+function render_version_list(versions=[1,2,3,4,5]) {
+    function href(vnd_version) {
+        const urlParamsVersion = new URLSearchParams(urlParams.toString())
+        urlParamsVersion.set('vnd_version', vnd_version)
+        return `${window.location.origin}/?${urlParamsVersion.toString()}${window.location.hash}`
+    }
+    return h('ul', {}, versions.map(version=>h('li',{class: version==vnd_version?'current':''},h('a',{href: href(version)},version))))
+}
+document.getElementById("versions").appendChild(render_version_list())
 
 function render_item(car_item) {
     return h('li',{},
