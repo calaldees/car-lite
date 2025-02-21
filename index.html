@@ -169,7 +169,7 @@ function render_more_link(content) {
 function render_page(car_response) {
     return h('div',{},[
         h('h1',{},car_response.title),
-        h('div',{},car_response.sections.map(section=>section.content.map(content=>[
+        h('div',{},car_response.sections.map(section=>section.content.map(content=>h('div',{},[
             h('h2',{},content.title),
             render_more_link(content),
             {
@@ -178,7 +178,8 @@ function render_page(car_response) {
                 continue_listening: render_continue_listening,
                 placeholder: render_placeholder,
             }[content.type](content.items),
-        ]).flat()).flat())
+        ])
+        )).flat())
     ])
 }
 
