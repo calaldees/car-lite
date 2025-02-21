@@ -91,10 +91,18 @@
         /* ================= */
 
         div:has(> .car_grid) {
+            position: relative;
             padding: .5rem 1.5rem 1.5rem 1.5rem;
             margin: 0 0 .25rem 0;
             border-radius: var(--radius-2x);
             background-color: var(--color-gray-500);
+        }
+
+        .more_link:has(~ .car_grid) {
+            position: absolute;
+            top: .5rem;
+            right: 1.5rem;
+            line-height: 4rem;
         }
 
         .car_grid {
