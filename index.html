@@ -6,6 +6,83 @@
     <title>Car-Lite</title>
 
     <style>
+        :root {
+            --color-gray-900: #242429;
+            --color-gray-500: #454549;
+            --color-gray-100: #ABABAD;
+
+            --color-text-100: #fff;
+            --color-interactive-100: #64D2FF;
+
+            --radius-1x: .5rem;
+            --radius-2x: .75rem;
+        }
+
+        html {
+            box-sizing: border-box;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+
+        body {
+            background-color: var(--color-gray-900);
+            color: var(--color-text-100);
+            font-family: sans-serif;
+        }
+        
+        a {
+            color: var(--color-interactive-100);
+        }
+
+        /* ================= */
+        /*     List Item     */
+        /* ================= */
+        .car_list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .car_list li {
+            display: block;
+            background-color: var(--color-gray-500);
+            margin-bottom: .25rem;
+            border-radius: var(--radius-2x);
+        }
+
+        .car_list a {
+            display: flex;
+            flex-direction: column;
+            min-height: 7rem;
+            padding: .75rem;
+            text-decoration: none;
+        }
+
+        .car_list img {
+            position: absolute;
+            width: 5.5rem;
+            border-radius: var(--radius-1x);
+        }
+
+        .car_list p {
+            padding-left: 6.25rem;
+            margin: 0;
+        }
+
+        .car_list p:first-of-type {
+            color: var(--color-text-100);
+            font-size: 1.875rem;
+            line-height: 1;
+            margin: .75rem 0 .625rem 0;
+        }
+
+        .car_list p:last-of-type {
+            color: var(--color-gray-100);
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        /* === End of List Item ===== */
         .car_grid li {display: inline-block;}
     </style>
 </head>
