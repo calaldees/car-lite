@@ -14,6 +14,8 @@
             --color-text-100: #fff;
             --color-interactive-100: #64D2FF;
 
+            --color-admin-tertiary: #001A33;
+
             --radius-1x: .5rem;
             --radius-2x: .75rem;
         }
@@ -26,7 +28,8 @@
         }
 
         body {
-            background-color: var(--color-gray-900);
+            margin: 0;
+            background-color: var(--color-admin-tertiary);
             color: var(--color-text-100);
             font-family: sans-serif;
         }
@@ -44,6 +47,12 @@
             position: fixed;
             bottom: 0;
             z-index: 1000;
+        }
+
+        .car-screen{
+            padding: 1rem;
+            border-radius: 2rem 2rem 0 0;
+            background-color: var(--color-gray-900);
         }
 
         #car { padding-bottom: 3rem; }
@@ -153,9 +162,9 @@
     <div id="endpoints"></div>
     <audio id="audio" controls></audio>
     <div class="car-screen">
-    <button onclick="history.back()">Back</button>
-    <div id="features"></div>
-    <div id="car"></div>
+        <button onclick="history.back()">Back</button>
+        <div id="features"></div>
+        <div id="car"></div>
     </div>
 <script type="module">
 
