@@ -218,7 +218,7 @@ const urlParams = new URLSearchParams(window.location.search)
 const params = {
     endpoint: urlParams.get('endpoint') || ENDPOINTS.prod,  //window.location.origin
     vnd_version: urlParams.get('vnd_version') || VERSIONS.at(-1),
-    platform: urlParams.get('platform') || VERSIONS.at(0),
+    platform: urlParams.get('platform') || PLATFORMS.at(0),
 }
 
 function render_params_links(param, items) {
@@ -281,7 +281,7 @@ function render_more_link(content) {
     return ''
 }
 function render_page(car_response) {
-    return h('div',{class: `.${params.platform}`},[
+    return h('div',{class: params.platform},[
         h('h1',{},car_response.title),
         h('div',{},car_response.sections.map(section=>section.content.map(content=>h('div',{},[
             h('h2',{},content.title),
