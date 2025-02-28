@@ -49,6 +49,50 @@
             z-index: 1000;
         }
 
+        /* ================= */
+        /*       Params      */
+        /* ================= */
+        #params {
+            text-align: center;
+            overflow: scroll;
+            white-space: nowrap;
+        }
+
+        #params ul {
+            display: inline-flex;
+            margin-right: 3rem;
+            padding: 0;
+            list-style: none;
+        }
+
+        #params li { margin-right: 1rem; }
+
+        #params a {
+            display: inline-block;
+            line-height: 1.5rem;
+            padding: .25rem .75rem;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            text-decoration: none;
+            color: var(--color-text-100);
+            opacity: .6;
+        }
+
+        #params a:hover, #params a:focus {
+            color: var(--color-interactive-100);
+            opacity: 1;
+            border-color: rgba(255,255,255,.13);
+            background-color: rgba(255,255,255,.03);
+        }
+
+        #params .current a {
+            opacity: 1;
+            color: var(--color-text-100);
+            background-color: rgba(255,255,255,.1);
+            border-color: rgba(255,255,255,.13);
+        }
+        /* === End of Params ===== */
+
         .car-screen{
             padding: 1rem;
             border-radius: 2rem 2rem 0 0;
