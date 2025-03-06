@@ -277,12 +277,16 @@ function render_params_links(param, items) {
         h('li',{class: value==params[param]?'current':''},h('a',{href: hrefForUrlParams(param, value)}, name))
     ))
 }
-document.getElementById("params").append(...[
-    render_params_links('endpoint'   , Object.entries(ENDPOINTS)),
-    render_params_links('vnd_version', VERSIONS.map(v=>[`v${v}`, v])),
-    render_params_links('platform'   , PLATFORMS.map(p=>[p, p])),
-])
-
+function render_params() {
+    const element = document.getElementById("params")
+    element.innerHTML = "";
+    element.append(...[
+        render_params_links('endpoint'   , Object.entries(ENDPOINTS)),
+        render_params_links('vnd_version', VERSIONS.map(v=>[`v${v}`, v])),
+        render_params_links('platform'   , PLATFORMS.map(p=>[p, p])),
+    ])
+}
+render_params()
 
 // Request ---------------------------------------------------------------------
 
@@ -378,6 +382,7 @@ window.addEventListener('hashchange', async (event)=>{
     hashchange_timestamp = (new Date()).getTime()
     const hash = getHash()
     if (hash.startsWith('/playables/')) {await play(hash.replace('/playables/', '')); return;}
+    render_params()
     await navigate(hash)
 })
 setHash(getHash() || '/features/home-hub')
