@@ -258,7 +258,7 @@ const ENDPOINTS = {
     prod: "https://bff-car-guacamole.musicradio.com",
 }
 const VERSIONS = [1,2,3,4,5]
-const PLATFORMS = ["CarPlay", "AndroidAuto"]
+const PLATFORMS = ["CarPlay", "AndroidAuto", "json"]
 
 const urlParams = new URLSearchParams(window.location.search)
 const params = {
@@ -346,11 +346,18 @@ function render_page(car_response) {
         )).flat())
     ])
 }
+function render_json(car_response) {
+    return h('div',{class: params.platform},[
+        h('pre',{class: 'curl'},`curl --compressed --location-trusted --header "Accept: application/vnd.global.${params.vnd_version}+json" --request GET --url ${params.endpoint}${getHash()}`),
+        h('pre',{class: 'json'},JSON.stringify(car_response, null, 2)),
+    ])
+
+}
 
 const element_car = document.getElementById('car')
 async function navigate(path) {
     element_car.innerHTML = ""
-    element_car.appendChild(render_page(await get(path)))
+    element_car.appendChild((params.platform=="json"?render_json:render_page)(await get(path)))
 }
 
 function render_features(features_response) {
