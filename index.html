@@ -57,18 +57,23 @@
         /* ================= */
         #params {
             text-align: center;
+            /*  Temp remove - need to consider alternate layout
             overflow: scroll;
             white-space: nowrap;
+            */
         }
 
         #params ul {
-            display: inline-flex;
+            display: inline-block;
             margin-right: 3rem;
             padding: 0;
             list-style: none;
         }
 
-        #params li { margin-right: 1rem; }
+        #params li {
+            display: inline;
+            margin-right: 1rem;
+        }
 
         #params a {
             display: inline-block;
@@ -312,7 +317,7 @@ function render_params() {
         render_params_links('endpoint'   , Object.entries(ENDPOINTS)),
         render_params_links('vnd_version', VERSIONS.map(v=>[`v${v}`, v])),
         render_params_links('platform'   , PLATFORMS.map(p=>[p, p])),
-        render_params_links('app_variant', APP_VARIANT.map(a=>[a, a])),
+        //render_params_links('app_variant', APP_VARIANT.map(a=>[a, a])),
     ])
 }
 render_params()
