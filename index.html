@@ -285,12 +285,14 @@ const ENDPOINTS = {
 }
 const VERSIONS = [1,2,3,4,5,6]
 const PLATFORMS = ["CarPlay", "AndroidAuto", "json"]
+const APP_VARIANT = ["GP", "LBC"]
 
 const urlParams = new URLSearchParams(window.location.search)
 const params = {
     endpoint: urlParams.get('endpoint') || ENDPOINTS.prod,  //window.location.origin
     vnd_version: urlParams.get('vnd_version') || VERSIONS.at(-1),
     platform: urlParams.get('platform') || PLATFORMS.at(0),
+    app_variant: urlParams.get('app_variant') || APP_VARIANT.at(0),
 }
 
 function render_params_links(param, items) {
@@ -310,6 +312,7 @@ function render_params() {
         render_params_links('endpoint'   , Object.entries(ENDPOINTS)),
         render_params_links('vnd_version', VERSIONS.map(v=>[`v${v}`, v])),
         render_params_links('platform'   , PLATFORMS.map(p=>[p, p])),
+        render_params_links('app_variant', APP_VARIANT.map(a=>[a, a])),
     ])
 }
 render_params()
@@ -318,6 +321,7 @@ render_params()
 
 const carHeaders = new Headers()
 carHeaders.append("Accept", `application/vnd.global.${params.vnd_version}+json`)
+//carHeaders.append("App-Variant", params.app_variant)  // TODO: Adding any headers prevents CORS extension from working.
 const authorization = urlParams.get('authorization') || ''
 if (authorization) {carHeaders.append("Authorization", authorization)}
 async function get(path) {
@@ -374,7 +378,7 @@ function render_page(car_response) {
 }
 function render_json(car_response) {
     return h('div',{class: params.platform},[
-        h('pre',{class: 'curl'},`curl --compressed --location-trusted --header "Accept: application/vnd.global.${params.vnd_version}+json" --request GET --url ${params.endpoint}${getHash()}`),
+        h('pre',{class: 'curl'},`curl --compressed --location-trusted --header "Accept: application/vnd.global.${params.vnd_version}+json" --header "App-Variant: ${params.app_variant}" --request GET --url ${params.endpoint}${getHash()}`),
         h('pre',{class: 'json'},JSON.stringify(car_response, null, 2)),
     ])
 
@@ -386,14 +390,17 @@ async function navigate(path) {
     element_car.appendChild((params.platform=="json"?render_json:render_page)(await get(path)))
 }
 
-function render_features(features_response) {
+function render_tabs(features_response) {
     return h('ul',{},features_response.map((feature)=>
         h('li',{},
-            h('a',{href: `#/features/${feature.slug}`, should_send_auth: feature.should_send_auth}, feature.name)
+            h('a',{
+                href: feature.slug.startsWith("/") ? `#${feature.slug}`:`#/features/${feature.slug}`,  // v1-v5 relative, v6 absolute,
+                should_send_auth: feature.should_send_auth,  // TODO: currently unused
+            }, feature.name)
         )
     ))
 }
-document.getElementById('features').appendChild(render_features(await get('/features')))
+document.getElementById('features').appendChild(render_tabs(await get('/features')))
 
 // -----------------------------------------------------------------------------
 
