@@ -399,7 +399,7 @@ function render_tabs(features_response) {
     return h('ul',{},features_response.map((feature)=>
         h('li',{},
             h('a',{
-                href: feature.slug.startsWith("/") ? `#${feature.slug}`:`#/features/${feature.slug}`,  // v1-v5 relative, v6 absolute,
+                href: feature.slug ? `#/features/${feature.slug}`:`#${feature.path}`,  // v1-v5 relative, v6 absolute,
                 should_send_auth: feature.should_send_auth,  // TODO: currently unused
             }, feature.name)
         )
