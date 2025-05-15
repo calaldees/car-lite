@@ -6,33 +6,48 @@ A mini web frontend to visualise GlobalPlayer CarPlay/AndroidAuto
 Why
 ---
 
-* Debugging
-* Editors visulise how the data looks on a range of platforms
+* Developers
+  * Simulating an entire device and compiling code takes time and resources
+  * Debugging backend api returns
+* Editors
+  * Visualise how the data looks on a range of platforms
 * Testing?
+  * (Probably not needed as we have Tavern tests that check flow)
   * Currently no tools for automating CarPlay/AndroidAuto - use Playwright?
-* Consider incredibleBulk cache support. Keep history over time and see content from snapshots
 
+### Future?
+
+* Consider [incredibleBulk](https://github.com/calaldees/incredibleBulkAPI) cache support
+  * Keep history over time and see content from snapshots
 
 
 Use
 ---
 
+* Currently car-lite can only works on from `localhost`
+  * CORS headers are not setup for prod/stg/dev `bff-car` yet
+
 ### Local
 
-1. install CORS browser plugin (see below)
+1. Install CORS browser plugin (see below)
 2. `make run` (+refresh your browser)
 
-* Currently only works on from `localhost` as CORS headers are not setup for bff-car yet
-  * To run this locally, I installed a browser extension to allow CORS from `://localhost` or `files:///`
-      * https://addons.mozilla.org/en-GB/firefox/addon/cors-everywhere/ [GitHub](https://github.com/spenibus/cors-everywhere-firefox-addon)
-      * Activation Whitelist (regex)
-          * ```
-            /^https?:\/\/[\w\d.]*localhost(:\d+)?\//i
-            /^file:/i
-              ```
+#### CORS Extension
+
+* Firefox
+  * [cors-everywhere](https://addons.mozilla.org/en-GB/firefox/addon/cors-everywhere/)
+    * [GitHub](https://github.com/spenibus/cors-everywhere-firefox-addon)
+  * Edit Activation Whitelist (regex)
+      * ```
+        /^https?:\/\/[\w\d.]*localhost(:\d+)?\//i
+        /^file:/i
+          ```
+* Chrome
+  * [cors-unblock](https://chromewebstore.google.com/detail/cors-unblock/lfhmikememgdcahcdlaciloancbhjino)
+  * Bring up cors-unblock and click `Start`
 
 ```
-file:///some_path/car-lite/index.html
+file:///local_path/car-lite/index.html
 ```
  or
 ```bash
@@ -43,7 +58,7 @@ open http://localhost:8000/index.html
 ### Remote
 
 * TODO
-    * Add `localhost` or CORS headers on the api servers so the browser extension is not needed
+    * Add `localhost` or CORS headers on the prod/stg/dev servers so the browser extension is not needed
 
 
 Implementation Goals
