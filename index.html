@@ -292,25 +292,47 @@ const VERSIONS = [1,2,3,4,5,6]
 const PLATFORMS = ["CarPlay", "AndroidAuto", "json"]
 const APP_VARIANT = ["GP", "LBC"]
 
-const urlParams = new URLSearchParams(window.location.search)
-const params = {
-    endpoint: urlParams.get('endpoint') || ENDPOINTS.prod,  //window.location.origin
-    vnd_version: urlParams.get('vnd_version') || VERSIONS.at(-1),
-    platform: urlParams.get('platform') || PLATFORMS.at(0),
-    app_variant: urlParams.get('app_variant') || APP_VARIANT.at(0),
+const DEFAULT_PARAMS = {
+    endpoint: ENDPOINTS.prod,  //window.location.origin
+    vnd_version: VERSIONS.at(-1),
+    platform: PLATFORMS.at(0),
+    app_variant: APP_VARIANT.at(0),
+    path: '/features/home-hub',
 }
 
-function render_params_links(param, items) {
-    function hrefForUrlParams(param, value) {
-        const _urlParams = new URLSearchParams(urlParams.toString())
-        _urlParams.set(param, value)
-        return `${window.location.origin}${window.location.pathname}?${_urlParams.toString()}${window.location.hash}`
+
+// State (hash) Management -----------------------------------------------------
+
+function getState() {
+    return {
+        ...{
+            endpoint: ENDPOINTS.prod,  //window.location.origin
+            vnd_version: VERSIONS.at(-1),
+            platform: PLATFORMS.at(0),
+            app_variant: APP_VARIANT.at(0),
+            path: '/features/home-hub',
+        },
+        ...Object.fromEntries(new URLSearchParams(window.location.hash.replace('#',''))),
     }
-    return h('ul', {}, items.map(([name, value])=>
-        h('li',{class: value==params[param]?'current':''},h('a',{href: hrefForUrlParams(param, value)}, name))
-    ))
 }
-function render_params() {
+function hrefUpdateState(update_state) {
+    return `#${new URLSearchParams({...getState(), ...update_state}).toString()}`
+    //window.location.hash = `#${new URLSearchParams({...getState(), partial_state}).toString()}`
+    //window.dispatchEvent(new HashChangeEvent("hashchange"))
+}
+function hrefPath(path) {return hrefUpdateState({'path': path})}
+
+
+// Params UI -------------------------------------------------------------------
+
+function render_params(state) {
+    function render_params_links(param, items) {
+        return h('ul', {}, items.map(([name, value])=>
+            h('li',{class: value==state[param]?'current':''},
+                h('a',{href: hrefUpdateState({[param]: value})}, name)
+            )
+        ))
+    }
     const element = document.getElementById("params")
     element.innerHTML = "";
     element.append(...[
@@ -320,18 +342,21 @@ function render_params() {
         //render_params_links('app_variant', APP_VARIANT.map(a=>[a, a])),
     ])
 }
-render_params()
+render_params(getState())  // done already on hash change?
 
 // Request ---------------------------------------------------------------------
 
-const carHeaders = new Headers()
-carHeaders.append("Accept", `application/vnd.global.${params.vnd_version}+json`)
-//carHeaders.append("App-Variant", params.app_variant)  // TODO: Adding any headers prevents CORS extension from working.
-const authorization = urlParams.get('authorization') || ''
-if (authorization) {carHeaders.append("Authorization", authorization)}
-async function get(path) {
+async function bff_get(path) {
+    const state = getState()
+
+    const carHeaders = new Headers()
+    carHeaders.append("Accept", `application/vnd.global.${state.vnd_version}+json`)
+    //carHeaders.append("App-Variant", params.app_variant)  // TODO: Adding any headers prevents CORS extension from working.
+    const authorization = state.authorization || ''
+    if (authorization) {carHeaders.append("Authorization", authorization)}
+
     console.log('get', path)
-    return await (await fetch(`${params.endpoint}${path}`, {headers: carHeaders})).json()
+    return await (await fetch(`${state.endpoint}${path}`, {headers: carHeaders})).json()
 }
 
 // Renderers -------------------------------------------------------------------
@@ -339,7 +364,7 @@ async function get(path) {
 function render_item(car_item) {
     return h('li',{},
         h('a',
-            {href: `#${car_item.primary_action.payload?.link?.href || '/playables/'+car_item.primary_action.payload?.id}`},
+            {href: hrefPath(car_item.primary_action.payload?.link?.href || '/playables/'+car_item.primary_action.payload?.id)},
             [
                 h('img',{src: car_item.image.url}),
                 h('p',{},car_item.title),
@@ -361,12 +386,12 @@ function render_placeholder() {
 }
 function render_more_link(content) {
     if (content.type == 'grid') {
-        return h('a',{href: `#${content.primary_action.payload?.link?.href}`, class:`more_link`},'More')
+        return h('a',{href: hrefPath(content.primary_action.payload?.link?.href), class:`more_link`}, 'More')
     }
     return ''
 }
-function render_page(car_response) {
-    return h('div',{class: params.platform},[
+function render_page(state, car_response) {
+    return h('div',{class: state.platform},[
         h('h1',{},car_response.title),
         h('div',{},car_response.sections.map(section=>section.content.map(content=>h('div',{},[
             h('h2',{},content.title),
@@ -381,33 +406,45 @@ function render_page(car_response) {
         )).flat())
     ])
 }
-function render_json(car_response) {
-    return h('div',{class: params.platform},[
-        h('pre',{class: 'curl'},`curl --compressed --location-trusted --header "Accept: application/vnd.global.${params.vnd_version}+json" --header "App-Variant: ${params.app_variant}" --request GET --url ${params.endpoint}${getHash()}`),
+function render_json(state, car_response) {
+    return h('div',{},[
+        h('pre',{class: 'curl'},`curl --compressed --location-trusted --header "Accept: application/vnd.global.${state.vnd_version}+json" --header "App-Variant: ${state.app_variant}" --request GET --url ${state.endpoint}${state.path}`),
         h('pre',{class: 'json'},JSON.stringify(car_response, null, 2)),
     ])
 
 }
 
-const element_car = document.getElementById('car')
-async function navigate(path) {
-    element_car.innerHTML = ""
-    element_car.appendChild((params.platform=="json"?render_json:render_page)(await get(path)))
-}
+// Features/Tabs ---
 
 function render_tabs(features_response) {
     return h('ul',{},features_response.map((feature)=>
         h('li',{},
             h('a',{
-                href: feature.slug ? `#/features/${feature.slug}`:`#${feature.path}`,  // v1-v5 relative, v6 absolute,
+                href: feature.slug ? hrefPath(`/features/${feature.slug}`):hrefPath(feature.path),  // v1-v5 relative, v6 absolute,
                 should_send_auth: feature.should_send_auth,  // TODO: currently unused
             }, feature.name)
         )
     ))
 }
-document.getElementById('features').appendChild(render_tabs(await get('/features')))
+const element_features = document.getElementById('features')
+async function update_features() {
+    element_features.innerHTML = ""
+    element_features.appendChild(render_tabs(await bff_get('/features')))
+}
 
-// -----------------------------------------------------------------------------
+
+// Navigate --------------------------------------------------------------------
+
+const element_car = document.getElementById('car')
+
+async function navigate(state) {
+    element_car.innerHTML = ""
+    const render_func = state.platform=="json" ? render_json : render_page
+    element_car.appendChild(render_func(state, await bff_get(state.path)))
+}
+
+
+// Play ------------------------------------------------------------------------
 
 async function play(universal_id) {
     const playable = await (await fetch(`http://bff-mobile-guacamole.musicradio.com/v16/playables/${universal_id}`)).json()
@@ -416,21 +453,29 @@ async function play(universal_id) {
     else            {console.error('unable to find stream_url in', playable)}
 }
 
-function getHash() {return window.location.hash.replace('#','')}
-function setHash(hash) {
-    window.location.hash = `#${hash}`
-    window.dispatchEvent(new HashChangeEvent("hashchange"))
-}
+// Main ------------------------------------------------------------------------
+
+let previous_state = {}
 let hashchange_timestamp;    // Debounce: browsers double fire this event? Bad browser!
 window.addEventListener('hashchange', async (event)=>{
     if ((new Date()).getTime() - hashchange_timestamp < 10) {return}  // replace with debounce?
     hashchange_timestamp = (new Date()).getTime()
-    const hash = getHash()
-    if (hash.startsWith('/playables/')) {await play(hash.replace('/playables/', '')); return;}
-    render_params()
-    await navigate(hash)
+
+    const state = getState()
+
+    if (state.path.startsWith('/playables/')) {await play(state.path.replace('/playables/', '')); return;}
+    render_params(state)
+
+    // On state difference update/change
+    if (state.vnd_version != previous_state.vnd_version) {await update_features()}
+    if (state.path != previous_state.path) {
+        // TODO
+    }
+    await navigate(state)  // TODO: for now - always navigate - optimise for path
+
+    previous_state = state
 })
-setHash(getHash() || '/features/home-hub')
+window.dispatchEvent(new HashChangeEvent("hashchange"))
 </script>
 </body>
 </html>
