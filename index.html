@@ -298,38 +298,58 @@ const DEFAULT_PARAMS = {
     platform: PLATFORMS.at(0),
     app_variant: APP_VARIANT.at(0),
     path: '/features/home-hub',
+    play_universal_id: '',
 }
 
 
-// State (hash) Management -----------------------------------------------------
+// State Management ------------------------------------------------------------
 
-function getState() {
-    return {
-        ...{
-            endpoint: ENDPOINTS.prod,  //window.location.origin
-            vnd_version: VERSIONS.at(-1),
-            platform: PLATFORMS.at(0),
-            app_variant: APP_VARIANT.at(0),
-            path: '/features/home-hub',
-        },
-        ...Object.fromEntries(new URLSearchParams(window.location.hash.replace('#',''))),
+class State {
+    constructor(defaults) {
+        this.defaults = defaults
+        this._session = {}
+    }
+
+    new_hash(partial_hash) {
+        return `#${new URLSearchParams({...this.hash, ...partial_hash}).toString()}`
+    }
+    get hash() {
+        return {
+            ...this.defaults.hash,
+            ...Object.fromEntries(new URLSearchParams(window.location.hash.replace('#',''))),
+        }
+    }
+    set hash(data) {
+        throw new Error('not implemented')
+    }
+
+    get session() {
+        return {
+            ...this.defaults.session,
+            ...this._session,
+        }
+    }
+    set session(data) {
+        throw new Error('not implemented')
+    }
+    get persistent() {
+        return null
     }
 }
-function hrefUpdateState(update_state) {
-    return `#${new URLSearchParams({...getState(), ...update_state}).toString()}`
-    //window.location.hash = `#${new URLSearchParams({...getState(), partial_state}).toString()}`
-    //window.dispatchEvent(new HashChangeEvent("hashchange"))
-}
-function hrefPath(path) {return hrefUpdateState({'path': path})}
+
+const state = new State({hash: DEFAULT_PARAMS, session: {previous_payload: null}})
+
+
+function hrefPath(path) {return state.new_hash({'path': path})}
 
 
 // Params UI -------------------------------------------------------------------
 
-function render_params(state) {
+function render_params(hash) {
     function render_params_links(param, items) {
         return h('ul', {}, items.map(([name, value])=>
-            h('li',{class: value==state[param]?'current':''},
-                h('a',{href: hrefUpdateState({[param]: value})}, name)
+            h('li',{class: value==hash[param]?'current':''},
+                h('a',{href: state.new_hash({[param]: value})}, name)
             )
         ))
     }
@@ -342,29 +362,35 @@ function render_params(state) {
         //render_params_links('app_variant', APP_VARIANT.map(a=>[a, a])),
     ])
 }
-render_params(getState())  // done already on hash change?
 
 // Request ---------------------------------------------------------------------
 
 async function bff_get(path) {
-    const state = getState()
+    const hash = state.hash
 
     const carHeaders = new Headers()
-    carHeaders.append("Accept", `application/vnd.global.${state.vnd_version}+json`)
+    carHeaders.append("Accept", `application/vnd.global.${hash.vnd_version}+json`)
     //carHeaders.append("App-Variant", params.app_variant)  // TODO: Adding any headers prevents CORS extension from working.
-    const authorization = state.authorization || ''
+    const authorization = hash.authorization || ''
     if (authorization) {carHeaders.append("Authorization", authorization)}
 
     console.log('get', path)
-    return await (await fetch(`${state.endpoint}${path}`, {headers: carHeaders})).json()
+    return await (await fetch(`${hash.endpoint}${path}`, {headers: carHeaders})).json()
 }
 
 // Renderers -------------------------------------------------------------------
 
+function render_action(primary_action) {
+    const primary_action_link = primary_action.payload?.link?.href
+    const primary_action_id = primary_action.payload?.id
+    if (primary_action_link) {return hrefPath(primary_action_link)}
+    if (primary_action_id) {return state.new_hash({'play_universal_id': primary_action_id})}
+    throw Error(`unknown primary_action ${primary_action}`)
+}
 function render_item(car_item) {
     return h('li',{},
         h('a',
-            {href: hrefPath(car_item.primary_action.payload?.link?.href || '/playables/'+car_item.primary_action.payload?.id)},
+            {href: render_action(car_item.primary_action)},
             [
                 h('img',{src: car_item.image.url}),
                 h('p',{},car_item.title),
@@ -390,8 +416,8 @@ function render_more_link(content) {
     }
     return ''
 }
-function render_page(state, car_response) {
-    return h('div',{class: state.platform},[
+function render_page(car_response) {
+    return h('div',{class: state.hash.platform},[
         h('h1',{},car_response.title),
         h('div',{},car_response.sections.map(section=>section.content.map(content=>h('div',{},[
             h('h2',{},content.title),
@@ -406,13 +432,24 @@ function render_page(state, car_response) {
         )).flat())
     ])
 }
-function render_json(state, car_response) {
+function render_json(car_response) {
+    const hash = state.hash
     return h('div',{},[
-        h('pre',{class: 'curl'},`curl --compressed --location-trusted --header "Accept: application/vnd.global.${state.vnd_version}+json" --header "App-Variant: ${state.app_variant}" --request GET --url ${state.endpoint}${state.path}`),
+        h('pre',{class: 'curl'},`curl --compressed --location-trusted --header "Accept: application/vnd.global.${hash.vnd_version}+json" --header "App-Variant: ${hash.app_variant}" --request GET --url ${hash.endpoint}${hash.path}`),
         h('pre',{class: 'json'},JSON.stringify(car_response, null, 2)),
     ])
 
 }
+
+const element_car = document.getElementById('car')
+function render_previous_payload() {
+    element_car.innerHTML = ""
+    if (!state.session.previous_payload) {return}
+    const render_func = state.hash.platform=="json" ? render_json : render_page
+    element_car.appendChild(render_func(state.session.previous_payload))
+
+}
+
 
 // Features/Tabs ---
 
@@ -433,17 +470,6 @@ async function update_features() {
 }
 
 
-// Navigate --------------------------------------------------------------------
-
-const element_car = document.getElementById('car')
-
-async function navigate(state) {
-    element_car.innerHTML = ""
-    const render_func = state.platform=="json" ? render_json : render_page
-    element_car.appendChild(render_func(state, await bff_get(state.path)))
-}
-
-
 // Play ------------------------------------------------------------------------
 
 async function play(universal_id) {
@@ -455,25 +481,34 @@ async function play(universal_id) {
 
 // Main ------------------------------------------------------------------------
 
-let previous_state = {}
+let previous_hash = state.hash
+previous_hash.path = 'ensure first run always has a changed path'  // TODO: tidy this
+previous_hash.vnd_version = 'ensure first run always has a changed version'
 let hashchange_timestamp;    // Debounce: browsers double fire this event? Bad browser!
 window.addEventListener('hashchange', async (event)=>{
     if ((new Date()).getTime() - hashchange_timestamp < 10) {return}  // replace with debounce?
     hashchange_timestamp = (new Date()).getTime()
 
-    const state = getState()
+    const hash = state.hash
+    const changedKeys = new Set(Object.entries(hash).map(([key, value])=>value==previous_hash[key]?null:key).filter(key=>key))
 
-    if (state.path.startsWith('/playables/')) {await play(state.path.replace('/playables/', '')); return;}
-    render_params(state)
+    if (changedKeys.has('play_universal_id') && hash.play_universal_id) {await play(hash.play_universal_id); return}
+
+    render_params(hash)
 
     // On state difference update/change
-    if (state.vnd_version != previous_state.vnd_version) {await update_features()}
-    if (state.path != previous_state.path) {
-        // TODO
+    if (changedKeys.has('vnd_version')) {
+        await update_features()   // the tabs can change on version change
     }
-    await navigate(state)  // TODO: for now - always navigate - optimise for path
+    if (changedKeys.intersection(new Set(['platform',])).size) {
+        render_previous_payload()  // platform is just style change and does not need fetch
+    }
+    if (changedKeys.intersection(new Set(['endpoint', 'vnd_version', 'app_variant', 'path'])).size) {
+        state._session.previous_payload = await bff_get(hash.path)
+        render_previous_payload()
+    }
 
-    previous_state = state
+    previous_hash = hash
 })
 window.dispatchEvent(new HashChangeEvent("hashchange"))
 </script>
