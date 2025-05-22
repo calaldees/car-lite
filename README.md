@@ -3,6 +3,7 @@ car-lite
 
 A mini web frontend to visualise GlobalPlayer CarPlay/AndroidAuto
 
+
 Why
 ---
 
@@ -24,41 +25,15 @@ Why
 Use
 ---
 
-* Currently car-lite can only works on from `localhost`
-  * CORS headers are not setup for prod/stg/dev `bff-car` yet
-
 ### Local
 
-1. Install CORS browser plugin (see below)
-2. `make run` (+refresh your browser)
-
-#### CORS Extension
-
-* Firefox
-  * [cors-everywhere](https://addons.mozilla.org/en-GB/firefox/addon/cors-everywhere/)
-    * [GitHub](https://github.com/spenibus/cors-everywhere-firefox-addon)
-  * Edit Activation Whitelist (regex)
-      * ```
-        /^https?:\/\/[\w\d.]*localhost(:\d+)?\//i
-        /^file:/i
-          ```
-* Chrome
-  * [cors-unblock](https://chromewebstore.google.com/detail/cors-unblock/lfhmikememgdcahcdlaciloancbhjino)
-  * Bring up cors-unblock and click `Start`
-
-```
-file:///local_path/car-lite/index.html
-```
- or
-```bash
-python3 -m http.server
-open http://localhost:8000/index.html
-```
-
-### Remote
-
-* TODO
-    * Add `localhost` or CORS headers on the prod/stg/dev servers so the browser extension is not needed
+* Option 1: Serve with `python` on `localhost:8000`
+  * `make` (+refresh your browser)
+  * ```bash
+    python3 -m http.server
+    open http://localhost:8000/index.html
+    ```
+* Option 2: Local file `file:///local_path/car-lite/index.html`
 
 
 Implementation Goals
