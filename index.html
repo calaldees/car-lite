@@ -473,7 +473,7 @@ async function update_features() {
 // Play ------------------------------------------------------------------------
 
 async function play(universal_id) {
-    const playable = await (await fetch(`http://bff-mobile-guacamole.musicradio.com/v16/playables/${universal_id}`)).json()
+    const playable = await (await fetch(`https://bff-mobile-guacamole.musicradio.com/v16/playables/${universal_id}`)).json()
     const stream_url = playable.payload.stream_url
     if (stream_url) {const audio = document.getElementById('audio'); audio.src = stream_url; audio.play();}
     else            {console.error('unable to find stream_url in', playable)}
