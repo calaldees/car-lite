@@ -311,7 +311,9 @@ class State {
     }
 
     new_hash(partial_hash) {
-        return `#${new URLSearchParams({...this.hash, ...partial_hash}).toString()}`
+        const params = {...this.hash, ...partial_hash}
+        for (let [k, v] of Object.entries(this.defaults.hash)) {if (params[k] == v) {delete params[k]}}
+        return `#${new URLSearchParams(params).toString()}`
     }
     get hash() {
         return {
@@ -497,7 +499,7 @@ window.addEventListener('hashchange', async (event)=>{
     render_params(hash)
 
     // On state difference update/change
-    if (changedKeys.has('vnd_version')) {
+    if (changedKeys.intersection(new Set(['platform','vnd_version'])).size) {
         await update_features()   // the tabs can change on version change
     }
     if (changedKeys.intersection(new Set(['platform',])).size) {
