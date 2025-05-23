@@ -307,7 +307,9 @@ const DEFAULT_PARAMS = {
 class State {
     constructor(defaults) {
         this.defaults = defaults
-        this._session = {}
+        this._session = {
+            ...this.defaults.session,
+        }
     }
 
     new_hash(partial_hash) {
@@ -326,10 +328,7 @@ class State {
     }
 
     get session() {
-        return {
-            ...this.defaults.session,
-            ...this._session,
-        }
+        return this._session
     }
     set session(data) {
         throw new Error('not implemented')
@@ -370,6 +369,11 @@ function render_params(hash) {
 async function bff_get(path) {
     const hash = state.hash
 
+    if (state.session.incredibleBulk && state.session.incredibleBulk[path]) {
+        console.log(`incredibleBulk ${path}`)
+        return state.session.incredibleBulk[path]
+    }
+
     const carHeaders = new Headers()
     carHeaders.append("Accept", `application/vnd.global.${hash.vnd_version}+json`)
     //carHeaders.append("App-Variant", params.app_variant)  // TODO: Adding any headers prevents CORS extension from working.
@@ -394,7 +398,7 @@ function render_item(car_item) {
         h('a',
             {href: render_action(car_item.primary_action)},
             [
-                h('img',{src: car_item.image.url}),
+                h('img',{src: state?.session?.incredibleBulkImages?.[car_item.image.url] || car_item.image.url}),
                 h('p',{},car_item.title),
                 h('p',{},car_item.subtitle),
             ])
@@ -498,6 +502,12 @@ window.addEventListener('hashchange', async (event)=>{
 
     render_params(hash)
 
+    if (changedKeys.has('endpoint') && hash.endpoint.endsWith('.json')) {
+        console.log('endpoint is a single json file - assuming incredibleBulk')
+        state.session.incredibleBulk = await (await fetch(hash.endpoint)).json()
+        state.session.incredibleBulkImages = await (await fetch(hash.endpoint.replace('.json','-images.json'))).json()
+    }
+
     // On state difference update/change
     if (changedKeys.intersection(new Set(['platform','vnd_version'])).size) {
         await update_features()   // the tabs can change on version change
@@ -506,7 +516,7 @@ window.addEventListener('hashchange', async (event)=>{
         render_previous_payload()  // platform is just style change and does not need fetch
     }
     if (changedKeys.intersection(new Set(['endpoint', 'vnd_version', 'app_variant', 'path'])).size) {
-        state._session.previous_payload = await bff_get(hash.path)
+        state.session.previous_payload = await bff_get(hash.path)
         render_previous_payload()
     }
 
