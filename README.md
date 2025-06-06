@@ -11,7 +11,6 @@ What
 
 * A simple browser based visualiser allows Global staff to debug backend api returns from `bff-car-guacamole.musicradio.com`
   * Car-Lite URLs/`curls` can be shared with the team via chat
-  * Single static file - No libraries/frameworks/dependencies - No build chain
 
 
 Why
@@ -41,13 +40,23 @@ Future
 * Other lites?
   * mobile-lite?
   * alexa-lite?
-  *tv-lite?
+  * tv-lite?
 * Host the tool internally? (Currently on github pages as proof of concept)
   * This was a collaboration between developers and design
   * Designers do not have git access to our internal git repos
   * For ease of collaboration we used public github repo and hosted the static file on github pages
 * [incredibleBulk](https://github.com/calaldees/incredibleBulkAPI) cache support
   * Keep history over time and see content from snapshots
+
+
+Technical Implementation
+------------------------
+
+* Single static file
+  * No libraries/frameworks/dependencies - No build chain
+  * 5k gzip compressed transferred (16k uncompressed)
+  * 250 lines of js (mostly state/event handling)
+  * 250 lines of css (lots of whitespace)
 
 
 Local Use
