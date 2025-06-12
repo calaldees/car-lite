@@ -509,7 +509,7 @@ window.addEventListener('hashchange', async (event)=>{
     }
 
     // On state difference update/change
-    if (changedKeys.intersection(new Set(['platform','vnd_version'])).size) {
+    if (changedKeys.intersection(new Set(['endpoint','platform','vnd_version'])).size) {
         await update_features()   // the tabs can change on version change
     }
     if (changedKeys.intersection(new Set(['platform',])).size) {
